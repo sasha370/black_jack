@@ -1,3 +1,6 @@
+class User < Player
 
-class User
+  def initialize(name = 'Player')
+    super
+  end
 end

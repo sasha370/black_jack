@@ -1,3 +1,7 @@
+class Dialer < Player
 
-class Dialer
+  def initialize(name = 'Dialer')
+    super
+  end
+
 end
