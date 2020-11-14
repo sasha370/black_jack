@@ -11,11 +11,6 @@ class Player
     @flag_pass = false
   end
 
-  # - взять карты у Hand
-  # - показывать карты
-  # - делать ставку
-  # - забирать деньги
-  #
   def make_bet
     @balance -= MIN_BET
     MIN_BET
@@ -24,6 +19,29 @@ class Player
   def take_cards(cards)
     @cards.concat(cards)
   end
+
+  def show_point
+
+  end
+
+  def show_cards_open
+    self.cards.each do |card|
+      print "#{card.value}#{card.suit} "
+    end
+    puts
+  end
+
+  def show_cards_close
+    self.cards.each do |card|
+      print  "▒ "
+    end
+      puts
+  end
+
+
+
+
+
 
   private
 
