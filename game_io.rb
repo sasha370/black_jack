@@ -26,7 +26,7 @@ module Game_IO
     input = gets.chomp.to_i
     case input
       when 1
-         @user.take_cards(@hand.deal_cards(1))
+         @user.take_cards(@hand.deal_one_card)
       when 2
          @user.flag_pass = true
       else
@@ -38,7 +38,7 @@ module Game_IO
     # Отрисовтаь карты
     # отрисовать очки
     puts 'ОТРИСОВКА СТОЛА '
-    p " Пользователь: #{count_score(@user)} "
+    p " Пользователь: #{count_score(@user)}  очков"
      @user.show_cards_open
     p " Дилер "
      @dialer.show_cards_close

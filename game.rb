@@ -38,29 +38,35 @@ class Game
   def new_game
     clear_screen
     puts ' Новая игра началась'
-    @user = User.new(@name)
-    @dialer = Dialer.new
+    make_players
     @hand = Hand.new
     @bank = 0
-    make_bets # игроки вносят деньги, банк принимет ставку
-    deal_cards # - рука раздает карты \ игроки принимают карты
+    make_bets(@players) # игроки вносят деньги, банк принимет ставку
+    deal_cards(@players) # - рука раздает карты \ игроки принимают карты
     play_game
-
   end
 
-  def make_bets
-    @bank += @user.make_bet
-    @bank += @dialer.make_bet
+  def make_players
+    @user = User.new(@name)
+    @dialer = Dialer.new
+    @players = []
+    @players << @user
+    @players << @dialer
+  end
+
+  def make_bets(players)
+    players.each {|player| @bank += player.make_bet}
+  end
+
+  def deal_cards(players)
+    players.each {|player| player.take_cards(@hand.deal_cards)}
   end
 
   def count_score(player)
      @hand.score(player.cards)
   end
 
-  def deal_cards
-    @user.take_cards(@hand.deal_cards)
-    @dialer.take_cards(@hand.deal_cards)
-  end
+
 
   def play_game
     until game_over?
@@ -75,7 +81,7 @@ class Game
   end
 
   def dialer_move
-    @dialer.make_choice(count_score(@dialer)) #TODO
+    @dialer.make_choice(count_score(@dialer), @hand) #TODO
   end
 
   def next_game
