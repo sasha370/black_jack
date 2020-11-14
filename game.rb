@@ -8,8 +8,8 @@ class Game
   def initialize
     greeting
     @name = get_name
-    p user = User.new(@name)
-    Table.new(user)
+    Table.new(User.new(@name), Dialer.new)
+    main_menu
   end
 
 

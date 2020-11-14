@@ -3,7 +3,7 @@ class Player
   attr_reader :name, :balance
 
   def initialize(name)
-    @name = name
+    @name = name || 'Player'
     @balance = START_BALANCE
   end
 

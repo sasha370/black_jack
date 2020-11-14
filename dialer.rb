@@ -1,7 +1,7 @@
 class Dialer < Player
 
   def initialize(name = 'Dialer')
-    super
+    super(name)
   end
 
 end

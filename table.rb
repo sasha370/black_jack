@@ -4,7 +4,7 @@ class Table
   # - анализирует WIN\Lose
   # - проверяет флаги
 
-  def initialize(user)
+  def initialize(user, dialer)
     @user = user
     puts ' Новая игра началась'
     puts "Игрок #{@user.name}, баланс #{@user.balance}"
