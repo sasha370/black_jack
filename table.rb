@@ -3,6 +3,7 @@ class Table
   # - выбирает ход игрока
   # - анализирует WIN\Lose
   # - проверяет флаги
+
   def initialize(user)
     @user = user
     puts ' Новая игра началась'

@@ -1,6 +1,6 @@
 class User < Player
 
-  def initialize(name = 'Player')
+  def initialize(name)
     super
   end
 end
