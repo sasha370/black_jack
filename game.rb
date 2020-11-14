@@ -8,7 +8,6 @@ class Game
   def initialize
     greeting
     @name = get_name
-    Table.new(User.new(@name), Dialer.new)
     main_menu
   end
 
@@ -23,7 +22,7 @@ class Game
       when 1
         new_game
       when 2
-        next_game #TODO проверить, что уже была создана игра
+        next_game
       when 3
         show_rules
       when 9
@@ -37,12 +36,42 @@ class Game
   end
 
   def new_game
-    
+      clear_screen
+      puts ' Новая игра началась'
+      @user = User.new(@name)
+      @dialer = Dialer.new
+      # puts "Игрок #{@user.name}, баланс #{@user.balance}"
+      # puts "Дилер #{@dialer.name}, баланс #{@dialer.balance}"
+      @hand = Hand.new
+      @bank = 0
+      make_bets # игроки вносят деньги, банк принимет ставку
+      deal_cards # - рука раздает карты \ игроки принимают карты
+
+      # - рука подчиьывает очки  = проверяет флаги
+      # - раздает ся по карте \ подсчитываются очки \ ЦИКЛ
+      #
   end
+
+  def make_bets
+    @bank += @user.make_bet
+    @bank += @dialer.make_bet
+  end
+
+  def deal_cards
+    @user.take_cards(@hand.deal_cards)
+    @dialer.take_cards(@hand.deal_cards)
+  end
+
 
   def next_game
-    #TODO
+    ##TODO проверить, что уже была создана игра
+    # Проверить, что у игроков есть деньги для ставки
   end
 
+  private
 
+
+  def game_over?
+    # @user.lose? || @dialer.lose?
+  end
 end
