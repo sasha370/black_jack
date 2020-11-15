@@ -1,14 +1,15 @@
 class Player
 
   attr_reader :name, :balance
-  attr_accessor :cards, :flag_lose, :flag_pass
+  attr_accessor :cards, :flag_pass, :score, :flag_lose
 
   def initialize(name)
     @name = name || 'Player'
     @balance = START_BALANCE
     @cards = []
-    @flag_lose = false
+    @score = 0
     @flag_pass = false
+    @flag_lose = false
   end
 
   def make_bet
@@ -20,8 +21,8 @@ class Player
     @cards.concat(cards)
   end
 
-  def show_point
-
+  def take_money(amount)
+    @balance += amount
   end
 
   def show_cards_open
@@ -32,28 +33,30 @@ class Player
   end
 
   def show_cards_close
-    self.cards.each do |card|
+    self.cards.each do
       print  "▒ "
     end
       puts
   end
 
+  def can_take_card?
+    self.cards.count < 3
+  end
+
+  def have_money?
+    self.balance >= MIN_BET
+  end
 
 
-
-
+  def clean_status
+    self.flag_lose = false
+    self.flag_pass = false
+    self.score = 0
+    self.cards = []
+  end
 
   private
 
-  def have_money?
-    self.balance > 0
-  end
-
-  def lose_money?
-    @flag_lose = true if @balance < MIN_BET
-  end
-
   MIN_BET = 10
   START_BALANCE = 100
-
 end

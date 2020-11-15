@@ -4,12 +4,12 @@ class Dialer < Player
     super(name)
   end
 
-  def make_choice(score, hand)
-    if score < 17
-      self.take_cards(hand.deal_one_card)
+  def take_card?
+    if self.score < 17
+      true
     else
       self.flag_pass = true
+      false
     end
   end
-
 end

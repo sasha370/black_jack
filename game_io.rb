@@ -16,39 +16,52 @@ module Game_IO
     retry
   end
 
-    #TODO
+  def spacer
+    puts '--' * 20
   end
 
   def user_choice_menu
+    spacer
+    if @user.can_take_card?
     puts 'Выбери действие:'
-    puts '1. Еще карту'
-    puts '2. Пас\вскрываем'
+    puts '1. Еще карту |  2. Пас   |  3. Вскрываем'
     input = gets.chomp.to_i
     case input
       when 1
-         @user.take_cards(@hand.deal_one_card)
+        @user.take_cards(@hand.deal_one_card)
       when 2
-         @user.flag_pass = true
+        @user.flag_pass = true
+      when 3
+        @open_cards = true
       else
         user_choice_menu
     end
-  end
+    else
+      @user.flag_pass = true
+    end
 
-  def  show_game_situation #TODO
-    # Отрисовтаь карты
-    # отрисовать очки
-    puts 'ОТРИСОВКА СТОЛА '
-    p " Пользователь: #{count_score(@user)}  очков"
-     @user.show_cards_open
-    p " Дилер "
-     @dialer.show_cards_close
-    p "Банк #{@bank}"
   end
-
 
   def clear_screen
     system("cls") || system("clear") || puts("\e[H\e[2J")
   end
 
   def show_rules
+    puts "В начале игры каждый участник делает минимульную ставку в банк"
+    puts 'Игрок и дилер получаютпо 2 карты на руки'
+    puts 'После этого игрок делает свой ход (Взять карту | Пропустить | Открыться)'
+    puts '- Если игрок взял карту и при этом уго очки не превысили 21, то ход перезодит к дилеру'
+    puts '- Если игрок Пропускает, то ход просто переходит к дилеру'
+    puts '- Если игрок выбирает "Открыться", вскрываются карты обоих игроков и считаются очки'
+    puts 'Игра заканчивается автоматически, если у каждого игрока на руках по три карты'
+  end
+
+  def buy_buy
+    puts ' ♡ ♧ ♢ ♤  Спасибо за игру ♡ ♧ ♢ ♤ '
+    exit
+  end
+
+  def show_user_balance
+    puts " Ваш баланс #{@user.balance} руб."
+  end
 end

@@ -16,6 +16,10 @@ class Hand
     deal_cards(1)
   end
 
+  def over_score?(score)
+    score > WIN_SCORE
+  end
+
   def score(cards)
     total = 0
     ace_count = 0
@@ -31,6 +35,7 @@ class Hand
   DEFAULT_VALUE = 10
   ACE_VALUE_MIN = 1
   ACE_VALUE_MAX = 11
+  WIN_SCORE = 21
 
   private
 
