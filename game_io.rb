@@ -1,6 +1,4 @@
 module Game_IO
-  # модуль отвечает за отрисовку базовых событий( отображение игрального стола, карт, рубашек  и т.п.)
-
   private
 
   def greeting
@@ -16,30 +14,38 @@ module Game_IO
     retry
   end
 
-  def spacer
-    puts '--' * 20
+  def dialer_win(&block)
+    puts '╔' + '═' * 32 + '╗'
+    puts '║         Вы проиграли!          ║'
+    puts '║ ' + yield + ' ║'
+    puts "║     Дилер забирает  #{@bank} руб.    ║"
+    puts '╚' + '═' * 32 + '╝'
+    @dialer.take_money(@bank)
+    show_user_balance
   end
 
-  def user_choice_menu
-    spacer
-    if @user.can_take_card?
-    puts 'Выбери действие:'
-    puts '1. Еще карту |  2. Пас   |  3. Вскрываем'
-    input = gets.chomp.to_i
-    case input
-      when 1
-        @user.take_cards(@hand.deal_one_card)
-      when 2
-        @user.flag_pass = true
-      when 3
-        @open_cards = true
-      else
-        user_choice_menu
-    end
-    else
-      @user.flag_pass = true
-    end
+  def user_win(&block)
+    puts '╔' + '═' * 35 + '╗'
+    puts "║     Поздравляю вы выиграли!       ║"
+    puts '║  ' + yield + '  ║'
+    puts "║       Ваш выигрыш #{@bank} руб.         ║"
+    puts '╚' + '═' * 35 + '╝'
+    @user.take_money(@bank)
+    show_user_balance
+  end
 
+  def draw
+    puts '╔' + '═' * 36 + '╗'
+    puts '║               Ничья!               ║'
+    puts "║ Деньги делятся поровну, по #{@bank / 2} руб. ║"
+    puts '╚' + '═' * 36 + '╝'
+    @user.take_money(@bank / 2)
+    @dialer.take_money(@bank / 2)
+    show_user_balance
+  end
+
+  def spacer
+    puts '--' * 20
   end
 
   def clear_screen
@@ -54,6 +60,9 @@ module Game_IO
     puts '- Если игрок Пропускает, то ход просто переходит к дилеру'
     puts '- Если игрок выбирает "Открыться", вскрываются карты обоих игроков и считаются очки'
     puts 'Игра заканчивается автоматически, если у каждого игрока на руках по три карты'
+    puts 'Нажмите любую клавишу, чтобы вернуться в меню'
+    gets
+    main_menu
   end
 
   def buy_buy
@@ -62,6 +71,19 @@ module Game_IO
   end
 
   def show_user_balance
-    puts " Ваш баланс #{@user.balance} руб."
+    puts "     ** Баланс #{@user.balance} руб.  **"
+    spacer
+  end
+
+  def end_of_word(score)
+    if score.between?(2, 4)
+      'очка'
+    elsif score == 21 || score == 1
+      'очко'
+    elsif score.between?(22, 24)
+      'очка'
+    else
+      'очков'
+    end
   end
 end

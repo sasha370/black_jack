@@ -4,7 +4,7 @@ class Player
   attr_accessor :cards, :flag_pass, :score, :flag_lose
 
   def initialize(name)
-    @name = name || 'Player'
+    @name = name
     @balance = START_BALANCE
     @cards = []
     @score = 0
@@ -34,7 +34,7 @@ class Player
 
   def show_cards_close
     self.cards.each do
-      print  "▒ "
+      print  " ▒ "
     end
       puts
   end
@@ -46,7 +46,6 @@ class Player
   def have_money?
     self.balance >= MIN_BET
   end
-
 
   def clean_status
     self.flag_lose = false

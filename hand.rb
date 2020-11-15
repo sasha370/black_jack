@@ -1,5 +1,3 @@
-require_relative 'deck'
-
 class Hand
   attr_reader :cards
 
@@ -51,7 +49,7 @@ class Hand
 
   def  total_score_whit_aces(ace_count, total)
     ace_count.times do
-      if (total + ACE_VALUE_MAX ) < 21
+      if (total + ACE_VALUE_MAX ) <= 21
         total += ACE_VALUE_MAX
       else
         total += ACE_VALUE_MIN

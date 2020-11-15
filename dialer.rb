@@ -5,7 +5,7 @@ class Dialer < Player
   end
 
   def take_card?
-    if self.score < 17
+    if self.score < 17 && can_take_card?
       true
     else
       self.flag_pass = true
