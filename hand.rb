@@ -1,5 +1,4 @@
 class Hand
-  attr_reader :cards
 
   def initialize
     deck = Deck.new
