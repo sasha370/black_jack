@@ -7,6 +7,14 @@ class Deck
     @cards = make_cards
   end
 
+  def deal_cards(count = 2)
+    @cards.sample(count)
+  end
+
+  def deal_one_card
+    deal_cards(1)
+  end
+
   private
 
   def make_cards
@@ -18,4 +26,5 @@ class Deck
     end
     cards.shuffle!
   end
+
 end
