@@ -1,5 +1,4 @@
-module Game_IO
-  private
+class Interface
 
   def greeting
     puts '♡ ♧ ♢ ♤   BlackJack   ♡ ♧ ♢ ♤'
@@ -14,34 +13,38 @@ module Game_IO
     retry
   end
 
-  def dialer_win(&block)
+  def count_free_space_in_line(line_length, word, have_char)
+    (line_length - word.length - have_char).to_i
+  end
+
+  def over_scored_message(player)
+    spaces = ' ' * (count_free_space_in_line(35, player.name, 15) / 2)
+    puts '╔' + '═' * 33 + '╗'
+    puts "║ " + spaces + "У #{player.name} перебор!"
+    puts '╚' + '═' * 33 + '╝'
+  end
+
+  def user_lose_message(user_score, dialer_score, bank)
     puts '╔' + '═' * 32 + '╗'
     puts '║         Вы проиграли!          ║'
-    puts '║ ' + yield + ' ║'
-    puts "║     Дилер забирает  #{@bank} руб.    ║"
+    puts '║ ' + "У дилера #{dialer_score}, а у вас всего #{user_score}!" + ' ║'
+    puts "║     Дилер забирает  #{bank} руб.    ║"
     puts '╚' + '═' * 32 + '╝'
-    @dialer.take_money(@bank)
-    show_user_balance
   end
 
-  def user_win(&block)
+  def user_win_message(user_score, dialer_score, bank)
     puts '╔' + '═' * 35 + '╗'
     puts "║     Поздравляю вы выиграли!       ║"
-    puts '║  ' + yield + '  ║'
-    puts "║       Ваш выигрыш #{@bank} руб.         ║"
+    puts '║  ' + "У вас  #{user_score}, а у дилера всего #{dialer_score}!" + '  ║'
+    puts "║       Ваш выигрыш #{bank} руб.         ║"
     puts '╚' + '═' * 35 + '╝'
-    @user.take_money(@bank)
-    show_user_balance
   end
 
-  def draw
+  def draw_message(bank)
     puts '╔' + '═' * 36 + '╗'
     puts '║               Ничья!               ║'
-    puts "║ Деньги делятся поровну, по #{@bank / 2} руб. ║"
+    puts "║ Деньги делятся поровну, по #{bank / 2} руб. ║"
     puts '╚' + '═' * 36 + '╝'
-    @user.take_money(@bank / 2)
-    @dialer.take_money(@bank / 2)
-    show_user_balance
   end
 
   def spacer
@@ -49,7 +52,7 @@ module Game_IO
   end
 
   def clear_screen
-    system("cls") || system("clear") || puts("\e[H\e[2J")
+    # system("cls") || system("clear") || puts("\e[H\e[2J")
   end
 
   def show_rules
@@ -61,8 +64,6 @@ module Game_IO
     puts '- Если игрок выбирает "Открыться", вскрываются карты обоих игроков и считаются очки'
     puts 'Игра заканчивается автоматически, если у каждого игрока на руках по три карты'
     puts 'Нажмите любую клавишу, чтобы вернуться в меню'
-    gets
-    main_menu
   end
 
   def buy_buy
@@ -70,8 +71,8 @@ module Game_IO
     exit
   end
 
-  def show_user_balance
-    puts "     ** Баланс #{@user.balance} руб.  **"
+  def show_user_balance(balance)
+    puts "     ** Баланс #{balance} руб.  **"
     spacer
   end
 
@@ -85,5 +86,22 @@ module Game_IO
     else
       'очков'
     end
+  end
+
+  def show_cards_on_table(user, dialer, open_cards)
+    clear_screen
+    user_score = user.hand.score
+    dialer_score = dialer.hand.score
+    user.show_cards_open
+    puts " #{user.name}: #{user_score}  #{end_of_word(user_score)}"
+    puts '┅' * 20
+    if open_cards
+      dialer.show_cards_open
+      puts " #{dialer.name}: #{dialer_score.to_s + ' ' + end_of_word(dialer_score)}"
+    else
+      dialer.show_cards_close
+      puts " #{dialer.name}:  '***'}"
+    end
+    spacer
   end
 end

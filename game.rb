@@ -1,13 +1,15 @@
-class Game
-  include Game_IO
+require_relative 'interface'
 
-  private
+class Game
+
 
   def initialize
-    greeting
-    @name = get_name
+    @interface = Interface.new
+    @open_cards = false #TOdo
+    @deck = Deck.new
+    @interface.greeting
+    make_players
     main_menu
-    @open_cards = false
   end
 
   def main_menu
@@ -18,34 +20,35 @@ class Game
     input = gets.chomp.to_i
     case input
       when 1
-        make_players
         new_game
       when 2
-        show_rules
+        @interface.show_rules
+        main_menu
       when 9
-        buy_buy
+        @interface.buy_buy
       else
-        clear_screen
+        # clear_screen todo
         puts '** Вам необходимо выбрать пункт меню **'
         main_menu
     end
   end
 
+
+
   def new_game
-    clear_screen
+    # clear_screen # todo
     set_players
     puts ' Новая игра началась'
-    @hand = Hand.new
     @bank = 0
     make_bets(@players)
     deal_cards(@players)
     play_game
-    open_cards
+    show_open_cards
     next_game?
   end
 
   def make_players
-    @user = User.new(@name)
+    @user = User.new({name:  @interface.get_name})
     @dialer = Dialer.new
   end
 
@@ -63,18 +66,14 @@ class Game
 
   def deal_cards(players)
     players.each do |player|
-      player.take_cards(@hand.deal_cards)
-      player.score = count_score(player)
+      player.hand.take_cards(@deck.deal_cards)
     end
   end
 
-  def count_score(player)
-    player.score = @hand.score(player.cards)
-  end
 
   def play_game
     until stop_game?
-      clear_screen
+      @interface.clear_screen
       user_move unless @user.flag_pass # можно убрать проверку, но придется пасовать повторно после хода дилера
       break if player_over_scored?(@user) || stop_game? || @open_cards
       dialer_move
@@ -85,18 +84,17 @@ class Game
   def user_move
     show_info
     user_choice_menu
-    count_score(@user)
   end
 
   def user_choice_menu
-    spacer
+    @interface.spacer
     if @user.can_take_card?
       puts 'Выбери действие:'
       puts '1. Еще карту |  2. Пас   |  3. Вскрываем'
       input = gets.chomp.to_i
       case input
         when 1
-          @user.take_cards(@hand.deal_one_card)
+          @user.hand.take_cards(@deck.deal_one_card)
         when 2
           @user.flag_pass = true
         when 3
@@ -111,8 +109,7 @@ class Game
 
   def dialer_move
     show_info
-    @dialer.take_cards(@hand.deal_one_card) if @dialer.take_card?
-    count_score(@dialer)
+    @dialer.hand.take_cards(@deck.deal_one_card) if @dialer.take_card?
   end
 
   def stop_game?
@@ -120,8 +117,8 @@ class Game
   end
 
   def player_over_scored?(player)
-    if @hand.over_score?(player.score)
-      player.flag_lose = true
+    if player.hand.over_score?
+       player.flag_lose = true
     end
   end
 
@@ -141,16 +138,16 @@ class Game
         when 1
           start_next_game
         when 2
-          show_user_balance
-          buy_buy
+          @interface.show_user_balance(@user.balance)
+          @interface.buy_buy
         else
-          clear_screen
+          @interface.clear_screen
           puts '** Вам необходимо выбрать пункт меню **'
           next_game?
       end
     else
       puts 'В вашем кошельке денег меньше, чем минимальная ставка'
-      buy_buy
+      @interface. buy_buy
     end
   end
 
@@ -162,42 +159,54 @@ class Game
     new_game
   end
 
-  def show_info
-    clear_screen
-    @user.score = @hand.score(@user.cards)
-    @dialer.score = @hand.score(@dialer.cards)
-    @user.show_cards_open
-    puts " #{@user.name}: #{@user.score}  #{end_of_word(@user.score)}"
-    puts '┅' * 20
-    @open_cards ? @dialer.show_cards_open : @dialer.show_cards_close
-    puts " #{@dialer.name}: #{@open_cards ? (@dialer.score.to_s + ' ' + end_of_word(@dialer.score)) : '***'}"
-  end
-
-  def open_cards
+  def show_open_cards
     @open_cards = true
     show_info
-    spacer
     define_winner
+  end
+
+  def show_info
+    @interface.show_cards_on_table(@user, @dialer, @open_cards)
   end
 
   def define_winner
     if @user.flag_lose
-      dialer_win { "        У вас перебор #{@user.score}!     " }
+      @interface.over_scored_message(@user)
+      @interface.show_user_balance(@user.balance)
     elsif @dialer.flag_lose
-      user_win { "      У дилера перебор #{@dialer.score}!     " }
+      @interface.over_scored_message(@dialer)
+      @interface.show_user_balance(@user.balance)
     else
       define_winner_by_score
     end
   end
 
   def define_winner_by_score
-    if @user.score == @dialer.score
+    if @user.hand.score == @dialer.hand.score
       draw
-    elsif @user.score > @dialer.score
-      user_win { "У вас  #{@user.score}, а у дилера всего #{@dialer.score}!" }
+    elsif @user.hand.score > @dialer.hand.score
+      user_win
     else
-      dialer_win { "У дилера #{@dialer.score}, а у вас всего #{@user.score}!" }
+      user_lose
     end
   end
 
+  def user_win(&block)
+    @interface.user_win_message(@user.hand.score, @dialer.hand.score, @bank, &block)
+    @user.take_money(@bank)
+    @interface.show_user_balance(@user.balance)
+  end
+
+  def draw
+    @interface.draw_message(@bank)
+    @user.take_money(@bank / 2)
+    @dialer.take_money(@bank / 2)
+    @interface.show_user_balance(@user.balance)
+  end
+
+  def user_lose(&block)
+    @interface.user_lose_message(@user.hand.score, @dialer.hand.score, @bank, &block)
+    @dialer.take_money(@bank)
+    @interface.show_user_balance(@user.balance)
+  end
 end
