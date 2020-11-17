@@ -2,211 +2,169 @@ require_relative 'interface'
 
 class Game
 
-
   def initialize
     @interface = Interface.new
-    @open_cards = false #TOdo
-    @deck = Deck.new
     @interface.greeting
     make_players
-    main_menu
+    @interface.new_game? ? new_game : exit
   end
-
-  def main_menu
-    puts 'Выберите, что необходимо сделать '
-    puts '1. Начать новую игру'
-    puts '2. Посмотреть правила'
-    puts '9. Выйти'
-    input = gets.chomp.to_i
-    case input
-      when 1
-        new_game
-      when 2
-        @interface.show_rules
-        main_menu
-      when 9
-        @interface.buy_buy
-      else
-        # clear_screen todo
-        puts '** Вам необходимо выбрать пункт меню **'
-        main_menu
-    end
-  end
-
-
 
   def new_game
-    # clear_screen # todo
-    set_players
-    puts ' Новая игра началась'
+    @open_cards = false
+    @deck = Deck.new
     @bank = 0
-    make_bets(@players)
-    deal_cards(@players)
+    @loser = nil
+    make_bets
+    make_hands
+    deal_cards
     play_game
-    show_open_cards
+    show_game_results
     next_game?
   end
 
   def make_players
-    @user = User.new({name:  @interface.get_name})
+    @user = User.new({ name: @interface.get_name })
     @dialer = Dialer.new
   end
 
-  def set_players
-    @players = []
-    @players << @user
-    @players << @dialer
+  def make_bets
+    @bank += @user.make_bet
+    @bank += @dialer.make_bet
   end
 
-  def make_bets(players)
-    players.each do |player|
-      @bank += player.make_bet
-    end
+  def make_hands
+    @user_hand = Hand.new
+    @dialer_hand = Hand.new
   end
 
-  def deal_cards(players)
-    players.each do |player|
-      player.hand.take_cards(@deck.deal_cards)
-    end
+  def deal_cards
+    @user_hand.take_cards(@deck.deal_cards)
+    @dialer_hand.take_cards(@deck.deal_cards)
   end
-
 
   def play_game
-    until stop_game?
-      @interface.clear_screen
-      user_move unless @user.flag_pass # можно убрать проверку, но придется пасовать повторно после хода дилера
-      break if player_over_scored?(@user) || stop_game? || @open_cards
+    until @open_cards
+      user_move
+      break if hand_over_scored?(@user_hand) || game_over?
       dialer_move
-      break if player_over_scored?(@dialer)
+      break if hand_over_scored?(@dialer_hand) || game_over?
     end
   end
 
   def user_move
     show_info
-    user_choice_menu
-  end
-
-  def user_choice_menu
-    @interface.spacer
-    if @user.can_take_card?
-      puts 'Выбери действие:'
-      puts '1. Еще карту |  2. Пас   |  3. Вскрываем'
-      input = gets.chomp.to_i
-      case input
-        when 1
-          @user.hand.take_cards(@deck.deal_one_card)
-        when 2
-          @user.flag_pass = true
-        when 3
-          @open_cards = true
-        else
-          user_choice_menu
-      end
-    else
-      @user.flag_pass = true
+    choice = @interface.user_choice_menu(@user_hand.can_take_card?)
+    case choice
+      when 1
+        @user_hand.take_cards(@deck.deal_one_card)
+      when 2
+        dialer_move
+      when 3
+        @open_cards = true
+      else
+        user_move
     end
   end
 
   def dialer_move
-    show_info
-    @dialer.hand.take_cards(@deck.deal_one_card) if @dialer.take_card?
-  end
-
-  def stop_game?
-    players_pass? || players_limit_cards_reached?
-  end
-
-  def player_over_scored?(player)
-    if player.hand.over_score?
-       player.flag_lose = true
+    if @dialer_hand.can_take_card?
+      if @dialer.take_more_card?(@dialer_hand.score)
+        @dialer_hand.take_cards(@deck.deal_one_card)
+      else
+        @open_cards = true
+      end
     end
   end
 
-  def players_limit_cards_reached?
-    !@user.can_take_card? && !@dialer.can_take_card?
+  def game_over?
+    @open_cards || hand_limit_cards_reached?
   end
 
-  def players_pass?
-    @user.flag_pass && @dialer.flag_pass
+  def hand_over_scored?(hand)
+    if hand.over_score?
+      @loser = hand
+      true
+    end
+  end
+
+  def hand_limit_cards_reached?
+    !@user_hand.can_take_card? && !@dialer_hand.can_take_card?
   end
 
   def next_game?
-    if @user.have_money?
-      puts 'Хотите продолжить?   1. ДА  |  2. ВЫХОД '
-      choice = gets.chomp.to_i
-      case choice
+    if @user.have_money? && @dialer.have_money?
+      case @interface.next_game_menu
         when 1
-          start_next_game
+          new_game
         when 2
           @interface.show_user_balance(@user.balance)
           @interface.buy_buy
+          exit
         else
-          @interface.clear_screen
-          puts '** Вам необходимо выбрать пункт меню **'
           next_game?
       end
     else
-      puts 'В вашем кошельке денег меньше, чем минимальная ставка'
-      @interface. buy_buy
+      @interface.no_money_message
+      exit
     end
   end
 
-  def start_next_game
-    @players.each do |player|
-      player.clean_status
-    end
-    @open_cards = false
-    new_game
-  end
-
-  def show_open_cards
+  def show_game_results
     @open_cards = true
     show_info
     define_winner
+    @interface.show_user_balance(@user.balance)
   end
 
   def show_info
-    @interface.show_cards_on_table(@user, @dialer, @open_cards)
+    @interface.show_cards_on_table({ user: @user,
+                                     user_hand: @user_hand,
+                                     dialer: @dialer,
+                                     dialer_hand: @dialer_hand,
+                                     open_cards: @open_cards })
   end
 
   def define_winner
-    if @user.flag_lose
-      @interface.over_scored_message(@user)
-      @interface.show_user_balance(@user.balance)
-    elsif @dialer.flag_lose
-      @interface.over_scored_message(@dialer)
-      @interface.show_user_balance(@user.balance)
+    if @loser == @user_hand
+      @interface.over_scored_message(@user.name)
+      user_lose
+    elsif @loser == @dialer_hand
+      @interface.over_scored_message(@dialer.name)
+      user_win
     else
       define_winner_by_score
     end
   end
 
   def define_winner_by_score
-    if @user.hand.score == @dialer.hand.score
+    if @user_hand.score == @dialer_hand.score
       draw
-    elsif @user.hand.score > @dialer.hand.score
+    elsif @user_hand.score > @dialer_hand.score
       user_win
     else
       user_lose
     end
   end
 
-  def user_win(&block)
-    @interface.user_win_message(@user.hand.score, @dialer.hand.score, @bank, &block)
+  def game_results
+    { user_score: @user_hand.score,
+      dialer_score: @dialer_hand.score,
+      bank: @bank }
+  end
+
+  def user_win
+    @interface.user_win_message(game_results)
     @user.take_money(@bank)
-    @interface.show_user_balance(@user.balance)
   end
 
   def draw
     @interface.draw_message(@bank)
     @user.take_money(@bank / 2)
     @dialer.take_money(@bank / 2)
-    @interface.show_user_balance(@user.balance)
   end
 
-  def user_lose(&block)
-    @interface.user_lose_message(@user.hand.score, @dialer.hand.score, @bank, &block)
+  def user_lose
+    @interface.user_lose_message(game_results)
     @dialer.take_money(@bank)
-    @interface.show_user_balance(@user.balance)
   end
 end

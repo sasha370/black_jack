@@ -25,6 +25,10 @@ class Hand
     total_score_whit_aces(ace_count, total)
   end
 
+  def can_take_card?
+    @cards.count < 3
+  end
+
   protected
 
   DEFAULT_VALUE = 10

@@ -1,5 +1,27 @@
 class Interface
 
+  def new_game?
+    clear_screen
+    puts 'Выберите, что необходимо сделать '
+    puts '1. Начать новую игру'
+    puts '2. Посмотреть правила'
+    puts '9. Выйти'
+    input = gets.chomp.to_i
+    case input
+      when 1
+        true
+      when 2
+        show_rules
+        new_game?
+      when 9
+        buy_buy
+      else
+        clear_screen
+        puts '** Вам необходимо выбрать пункт меню **'
+        new_game?
+    end
+  end
+
   def greeting
     puts '♡ ♧ ♢ ♤   BlackJack   ♡ ♧ ♢ ♤'
   end
@@ -13,31 +35,36 @@ class Interface
     retry
   end
 
-  def count_free_space_in_line(line_length, word, have_char)
-    (line_length - word.length - have_char).to_i
+  def user_choice_menu(can_take)
+    spacer
+    if can_take
+      puts 'Выбери действие:'
+      puts '1. Еще карту |  2. Пас   |  3. Вскрываем'
+      gets.chomp.to_i
+    end
+
   end
 
-  def over_scored_message(player)
-    spaces = ' ' * (count_free_space_in_line(35, player.name, 15) / 2)
-    puts '╔' + '═' * 33 + '╗'
-    puts "║ " + spaces + "У #{player.name} перебор!"
-    puts '╚' + '═' * 33 + '╝'
-  end
-
-  def user_lose_message(user_score, dialer_score, bank)
+  def over_scored_message(player_name)
     puts '╔' + '═' * 32 + '╗'
-    puts '║         Вы проиграли!          ║'
-    puts '║ ' + "У дилера #{dialer_score}, а у вас всего #{user_score}!" + ' ║'
-    puts "║     Дилер забирает  #{bank} руб.    ║"
+    puts "║     У #{player_name} перебор!"
     puts '╚' + '═' * 32 + '╝'
   end
 
-  def user_win_message(user_score, dialer_score, bank)
-    puts '╔' + '═' * 35 + '╗'
-    puts "║     Поздравляю вы выиграли!       ║"
-    puts '║  ' + "У вас  #{user_score}, а у дилера всего #{dialer_score}!" + '  ║'
-    puts "║       Ваш выигрыш #{bank} руб.         ║"
-    puts '╚' + '═' * 35 + '╝'
+  def user_lose_message(args)
+    puts '╔' + '═' * 32 + '╗'
+    puts '║         Вы проиграли!          ║'
+    puts '║ ' + "У дилера #{args[:dialer_score]}, а у вас  #{args[:user_score]}!"
+    puts "║     Дилер забирает  #{args[:bank]} руб.    ║"
+    puts '╚' + '═' * 32 + '╝'
+  end
+
+  def user_win_message(args)
+    puts '╔' + '═' * 32 + '╗'
+    puts "║     Поздравляю вы выиграли!    ║"
+    puts '║  ' + "У вас  #{args[:user_score]}, а у дилера  #{args[:dialer_score]}!"
+    puts "║       Ваш выигрыш #{args[:bank]} руб.      ║"
+    puts '╚' + '═' * 32 + '╝'
   end
 
   def draw_message(bank)
@@ -52,7 +79,17 @@ class Interface
   end
 
   def clear_screen
-    # system("cls") || system("clear") || puts("\e[H\e[2J")
+    system("cls") || system("clear") || puts("\e[H\e[2J")
+  end
+
+  def next_game_menu
+      puts 'Хотите продолжить?   1. ДА  |  2. ВЫХОД '
+      gets.chomp.to_i
+  end
+
+  def no_money_message
+    puts 'У одного из игроков закончились деньги'
+    buy_buy
   end
 
   def show_rules
@@ -64,11 +101,11 @@ class Interface
     puts '- Если игрок выбирает "Открыться", вскрываются карты обоих игроков и считаются очки'
     puts 'Игра заканчивается автоматически, если у каждого игрока на руках по три карты'
     puts 'Нажмите любую клавишу, чтобы вернуться в меню'
+    gets
   end
 
   def buy_buy
     puts ' ♡ ♧ ♢ ♤  Спасибо за игру ♡ ♧ ♢ ♤ '
-    exit
   end
 
   def show_user_balance(balance)
@@ -88,20 +125,31 @@ class Interface
     end
   end
 
-  def show_cards_on_table(user, dialer, open_cards)
+  def show_cards_on_table(args)
     clear_screen
-    user_score = user.hand.score
-    dialer_score = dialer.hand.score
-    user.show_cards_open
-    puts " #{user.name}: #{user_score}  #{end_of_word(user_score)}"
+    show_cards_open(args[:user_hand])
+    puts " #{args[:user].name}: #{args[:user_hand].score}  #{end_of_word(args[:user_hand].score)}"
     puts '┅' * 20
-    if open_cards
-      dialer.show_cards_open
-      puts " #{dialer.name}: #{dialer_score.to_s + ' ' + end_of_word(dialer_score)}"
+    if args[:open_cards]
+      show_cards_open(args[:dialer_hand])
+      puts " #{args[:dialer].name}: #{args[:dialer_hand].score.to_s + ' ' + end_of_word(args[:dialer_hand].score)}"
     else
-      dialer.show_cards_close
-      puts " #{dialer.name}:  '***'}"
+      show_cards_close(args[:dialer_hand])
+      puts " #{args[:dialer].name}:  '***'}"
     end
     spacer
   end
+
+  def show_cards_open(hand)
+    hand.cards.each do |card|
+      print "#{card.value}#{card.suit} "
+      end
+    puts
+  end
+
+  def show_cards_close(hand)
+      print  " ▒ " * hand.cards.count
+    puts
+  end
+
 end

@@ -4,11 +4,10 @@ class Dialer < Player
     @name = 'Dialer'
   end
 
-  def take_card?
-    if @hand.score < 17 && can_take_card?
+  def take_more_card?(score)
+    if score < 17
       true
     else
-      self.flag_pass = true
       false
     end
   end
