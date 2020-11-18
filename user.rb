@@ -1,6 +1,6 @@
 class User < Player
 
-  def initialize(name)
-    super
+  def post_initialize(args)
+    @name = args[:name]
   end
 end

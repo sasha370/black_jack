@@ -1,30 +1,32 @@
 class Hand
+  attr_accessor :cards, :score
 
   def initialize
-    deck = Deck.new
-    @cards = deck.cards
+    @cards = []
+    @score = 0
   end
 
-  def deal_cards(count = 2)
-    @cards.sample(count)
+  def take_cards(cards)
+    @cards.concat(cards)
+    @score = self.score
   end
 
-  def deal_one_card
-    deal_cards(1)
+  def over_score?
+    @score > WIN_SCORE
   end
 
-  def over_score?(score)
-    score > WIN_SCORE
-  end
-
-  def score(cards)
+  def score
     total = 0
     ace_count = 0
-    cards.each do |card|
+    @cards.each do |card|
       total += get_card_value(card)
       ace_count += 1 if card.value == 'A'
     end
     total_score_whit_aces(ace_count, total)
+  end
+
+  def can_take_card?
+    @cards.count < 3
   end
 
   protected
